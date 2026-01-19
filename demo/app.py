@@ -147,10 +147,7 @@ optionally in parallel for zero latency impact.
 """
 
 # Build Gradio interface
-with gr.Blocks(
-    title="Compass Demo",
-    theme=gr.themes.Soft(primary_hue="blue"),
-) as demo:
+with gr.Blocks(title="Compass Demo") as demo:
     gr.Markdown(HEADER_MD)
 
     with gr.Tab("Try It"):
@@ -245,4 +242,4 @@ with gr.Blocks(
     gr.Markdown(FOOTER_MD)
 
 if __name__ == "__main__":
-    demo.launch()
+    demo.launch(theme=gr.themes.Soft(primary_hue="blue"), ssr_mode=False)
