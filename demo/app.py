@@ -34,7 +34,7 @@ def generate_response_and_followups(
         return "", "", "Please enter a question."
 
     # Create LLM
-    llm = ChatOpenAI(model="gpt-4o-mini", temperature=temperature)
+    llm = ChatOpenAI(model="gpt-5-nano", temperature=temperature)
 
     # Generate a simple response (simulating an agent)
     response = llm.invoke(f"Answer this question concisely: {user_query}")
@@ -74,7 +74,7 @@ def compare_strategies(user_query: str, temperature: float) -> dict:
     if not user_query.strip():
         return dict.fromkeys(STRATEGIES, "Please enter a question.")
 
-    llm = ChatOpenAI(model="gpt-4o-mini", temperature=temperature)
+    llm = ChatOpenAI(model="gpt-5-nano", temperature=temperature)
 
     # Generate response once
     response = llm.invoke(f"Answer this question concisely: {user_query}")

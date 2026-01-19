@@ -26,7 +26,7 @@ class TestCompassIntegration:
 
         from langchain_openai import ChatOpenAI
 
-        return ChatOpenAI(model="gpt-4o-mini", temperature=0.7)
+        return ChatOpenAI(model="gpt-5-nano", temperature=0.7)
 
     def test_generates_real_suggestions(self, model):
         """Test that Compass generates actual suggestions with a real LLM."""
@@ -47,9 +47,7 @@ class TestCompassIntegration:
             ),
             "messages": [
                 HumanMessage(content="What is machine learning?"),
-                AIMessage(
-                    content="Machine learning is a subset of artificial intelligence..."
-                ),
+                AIMessage(content="Machine learning is a subset of artificial intelligence..."),
             ],
         }
 
