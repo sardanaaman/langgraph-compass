@@ -416,7 +416,7 @@ with gr.Blocks(title="Compass Demo") as demo:
 """)
 
             gr.Markdown("### Installation")
-            gr.Code("pip install langgraph-compass", language="bash")
+            gr.Code("pip install langgraph-compass", language="shell")
 
     gr.Markdown("---")
     gr.Markdown("*Built and battle-tested at Cisco*")
