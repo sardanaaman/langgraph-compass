@@ -35,12 +35,21 @@ class DefaultTriggerPolicy:
         >>> policy = DefaultTriggerPolicy(min_response_length=100)
         >>> policy.should_trigger({"final_response": "Short."})
         False
+
+        >>> # Custom guardrail keys for your implementation
+        >>> policy = DefaultTriggerPolicy(
+        ...     guardrail_keys=["off_topic_triggered", "pii_detected"]
+        ... )
     """
+
+    # Default guardrail state keys to check
+    DEFAULT_GUARDRAIL_KEYS = ["input_guardrail_fired", "output_guardrail_fired"]
 
     def __init__(
         self,
         *,
         skip_on_guardrail: bool = True,
+        guardrail_keys: list[str] | None = None,
         skip_classifications: list[str] | None = None,
         require_agent_response: bool = True,
         min_response_length: int = 50,
@@ -50,12 +59,16 @@ class DefaultTriggerPolicy:
 
         Args:
             skip_on_guardrail: Skip if guardrails fired.
+            guardrail_keys: State keys to check for guardrail triggers.
+                Defaults to ["input_guardrail_fired", "output_guardrail_fired"].
+                Set to your own keys to match your guardrails implementation.
             skip_classifications: Query classifications to skip.
             require_agent_response: Require a substantive response.
             min_response_length: Minimum response length to trigger.
             custom_skip_keys: Additional state keys that, if truthy, skip generation.
         """
         self.skip_on_guardrail = skip_on_guardrail
+        self.guardrail_keys = guardrail_keys or self.DEFAULT_GUARDRAIL_KEYS
         self.skip_classifications = skip_classifications or ["REQUIRES_MORE_INFORMATION"]
         self.require_agent_response = require_agent_response
         self.min_response_length = min_response_length
@@ -63,11 +76,11 @@ class DefaultTriggerPolicy:
 
     def should_trigger(self, state: dict[str, Any]) -> bool:
         """Check all conditions to determine if we should generate follow-ups."""
-        # Skip if guardrails fired
-        if self.skip_on_guardrail and (
-            state.get("input_guardrail_fired") or state.get("output_guardrail_fired")
-        ):
-            return False
+        # Skip if any guardrail key is truthy
+        if self.skip_on_guardrail:
+            for key in self.guardrail_keys:
+                if state.get(key):
+                    return False
 
         # Skip certain classifications
         if state.get("query_classification") in self.skip_classifications:
