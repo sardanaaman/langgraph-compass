@@ -29,20 +29,20 @@ At the end, suggest a follow-up question.
 """
 ```
 
-**But this breaks down quickly:**
+**But this breaks down in enterprise settings:**
 
 | Problem | What Happens |
 |---------|--------------|
-| No conditional logic | Suggests follow-ups after errors, guardrail blocks, or "goodbye" |
-| No novelty tracking | Keeps suggesting the same things conversation after conversation |
-| One-size-fits-all | Can't adapt strategy (clarify vs. explore vs. deepen) |
-| Coupled to response | Can't run in parallel—adds latency to every response |
-| Hard to tune | Logic buried in prompts, not configurable or testable |
-| No separation of concerns | Follow-up logic tangled with agent logic |
+| **Unbounded suggestions** | Model suggests follow-ups your agent can't actually fulfill |
+| **Guardrail-unaware** | Suggests follow-ups after guardrails block a request |
+| **No novelty tracking** | Repeats similar suggestions across conversation turns |
+| **Coupled to response** | Can't run in parallel—adds latency to every response |
+| **Hard to tune** | Logic buried in prompts, not configurable or testable |
+| **One-size-fits-all** | Can't adapt to user workflows or preferences |
 
 ## The Compass Solution
 
-Compass is a dedicated LangGraph node that handles follow-up generation properly:
+Compass is a dedicated LangGraph node that gives you granular control over follow-up generation:
 
 ```python
 from compass import CompassNode
@@ -61,16 +61,14 @@ builder.add_node("compass", compass)
 builder.add_edge("agent", "compass")
 ```
 
-**What you get:**
-
-| Feature | Benefit |
-|---------|---------|
-| **Intelligent Triggers** | Skips follow-ups when inappropriate (guardrails, errors, greetings) |
-| **Multi-Strategy Generation** | Adapts approach based on conversation context |
-| **Novelty Filtering** | Never repeats similar suggestions |
-| **Zero-Latency Patterns** | Run in parallel with your agent using `Send()` |
-| **Organic Injection** | Weave follow-ups naturally into responses |
-| **Full Observability** | Every generation traced in LangSmith |
+| Feature | What It Enables |
+|---------|-----------------|
+| **Configurable Triggers** | Skip follow-ups on guardrails, short responses, or custom conditions |
+| **Capability Grounding** | Only suggest paths your agent can actually handle via ExampleRetriever |
+| **Novelty Filtering** | Automatically avoids repetitive suggestions across turns |
+| **Parallel Execution** | Run via `Send()` for zero added latency |
+| **Separate Model** | Use a smaller/cheaper model for follow-ups |
+| **Full Tracing** | Every decision logged in LangSmith |
 
 ## Installation
 
@@ -187,18 +185,48 @@ class MyTriggerPolicy:
 compass = CompassNode(model=llm, trigger=MyTriggerPolicy())
 ```
 
-### Domain-Specific Examples
+### Capability-Bounded Suggestions
 
-Provide example questions from your domain for better results:
+Only suggest follow-ups your agent can actually fulfill.
 
 ```python
-class MyExampleRetriever:
-    def retrieve(self, query: str, k: int = 5) -> list[str]:
-        # MMR search for relevant but diverse examples
-        return vector_store.max_marginal_relevance_search(query, k=k)
+class CapabilityRetriever:
+    """Ground follow-ups in your agent's actual capabilities."""
 
-compass = CompassNode(model=llm, example_retriever=MyExampleRetriever())
+    def __init__(self, capability_store):
+        self.store = capability_store  # Your vector store of supported queries
+
+    def retrieve(self, query: str, k: int = 5) -> list[str]:
+        # MMR: relevant AND diverse paths your agent can handle
+        return self.store.max_marginal_relevance_search(
+            query, k=k, fetch_k=20, lambda_mult=0.7
+        )
+
+compass = CompassNode(
+    model=llm,
+    example_retriever=CapabilityRetriever(capability_store)
+)
 ```
+
+This prevents the model from suggesting follow-ups about features that don't exist or data you don't have.
+
+### Cost-Effective Model Selection
+
+Since follow-up generation is decoupled from your main agent, you can use a smaller, faster, cheaper model:
+
+```python
+from langchain_openai import ChatOpenAI
+
+# Your main agent uses a powerful model
+agent_model = ChatOpenAI(model="gpt-5.2")
+
+# Compass can use a lightweight model — follow-ups don't need heavy reasoning
+compass_model = ChatOpenAI(model="gpt-5-nano")  # 10x cheaper, faster
+
+compass = CompassNode(model=compass_model)
+```
+
+This separation means follow-up generation doesn't inflate your costs or add latency to your critical path.
 
 ## Integrations
 
@@ -242,41 +270,40 @@ client.create_feedback(
 # Use this data to improve your prompts and strategies
 ```
 
-### Personalization with LangMem
+### Workflow Personalization with LangMem
 
-Integrate with [langmem](https://github.com/langchain-ai/langmem) to personalize follow-ups based on user preferences:
+Integrate with [langmem](https://github.com/langchain-ai/langmem) to learn user workflows and suggest their typical next steps:
 
 ```python
-from langmem import create_search_memory_tool
 from langgraph.store.memory import InMemoryStore
 
 store = InMemoryStore(index={"dims": 1536, "embed": "openai:text-embedding-3-small"})
 
-class PersonalizedExampleRetriever:
-    """Retrieves examples based on user's past preferences."""
+class WorkflowRetriever:
+    """Suggest follow-ups based on user's typical workflow patterns."""
 
     def __init__(self, store, user_id: str):
         self.store = store
         self.user_id = user_id
 
-    def retrieve(self, query: str, k: int = 5) -> list[str]:
-        # Search user's memory for preferences
+    def retrieve(self, query: str, k: int = 3) -> list[str]:
+        # Search user's workflow history
         memories = self.store.search(
-            ("memories", self.user_id),
+            ("workflows", self.user_id),
             query=query,
         )
+        # Return their typical next actions
+        # e.g., user always does: check metrics → review alerts → update dashboard
+        return [m.content.get("typical_next_step") for m in memories if m.content]
 
-        # Adapt examples based on what we know about the user
-        # e.g., if user prefers technical depth, return deeper examples
-        user_style = self._extract_style(memories)
-        return self._get_examples_for_style(query, user_style, k)
-
-# Create personalized compass per user
+# Compass learns to fit into each user's personal workflow
 compass = CompassNode(
     model=llm,
-    example_retriever=PersonalizedExampleRetriever(store, user_id="user-123"),
+    example_retriever=WorkflowRetriever(store, user_id="user-123"),
 )
 ```
+
+Instead of generic "Anything else?", Compass can suggest "Ready to review alerts?" because it knows that's what this user typically does next.
 
 ## Configuration Reference
 
@@ -306,10 +333,21 @@ CompassNode(
 DefaultTriggerPolicy(
     *,
     skip_on_guardrail: bool = True,                 # Skip if guardrails fired
-    skip_classifications: list[str] | None = None, # Query types to skip
+    guardrail_keys: list[str] | None = None,        # Your guardrail state keys
+                                                    # Default: ["input_guardrail_fired", "output_guardrail_fired"]
+    skip_classifications: list[str] | None = None,  # Query types to skip
     require_agent_response: bool = True,            # Need substantive response
     min_response_length: int = 50,                  # Minimum chars to trigger
     custom_skip_keys: list[str] | None = None,      # Additional state keys to check
+)
+```
+
+**Example with custom guardrail keys:**
+
+```python
+# Match your guardrails implementation
+trigger = DefaultTriggerPolicy(
+    guardrail_keys=["off_topic_detected", "pii_flagged", "toxicity_blocked"]
 )
 ```
 
