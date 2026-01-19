@@ -2,35 +2,66 @@
 
 Interactive demo for [langgraph-compass](https://github.com/sardanaaman/langgraph-compass).
 
-## Deploy to Hugging Face Spaces
+## Automated Deployment (Recommended)
 
-1. **Create a new Space** at [huggingface.co/new-space](https://huggingface.co/new-space)
+The demo auto-deploys to Hugging Face Spaces when you push changes to the `demo/` folder.
+
+### One-Time Setup
+
+1. **Create a Hugging Face Space**
+   - Go to [huggingface.co/new-space](https://huggingface.co/new-space)
    - Choose **Gradio** as the SDK
-   - Name it something like `compass-demo`
+   - Name it `compass-demo` (or whatever you prefer)
+   - Set visibility (public recommended for discoverability)
 
-2. **Clone your new Space**
+2. **Create a Hugging Face Token**
+   - Go to [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens)
+   - Create a new token with **Write** access
+   - Copy the token
+
+3. **Add Secrets/Variables to GitHub**
+
+   Go to your GitHub repo → Settings → Secrets and variables → Actions
+
+   **Secrets** (click "New repository secret"):
+   - `HF_TOKEN`: Your Hugging Face write token
+   - `OPENAI_API_KEY`: Your OpenAI API key (also add this to HF Space secrets)
+
+   **Variables** (click "Variables" tab → "New repository variable"):
+   - `HF_USERNAME`: Your Hugging Face username
+   - `HF_SPACE_NAME`: `compass-demo` (or your Space name)
+
+4. **Add OpenAI Key to HF Space**
+   - Go to your Space → Settings → Variables and secrets
+   - Add `OPENAI_API_KEY` as a secret
+
+5. **Initial Push**
+   - Run the workflow manually (Actions → "Sync Demo to Hugging Face Space" → "Run workflow")
+   - Or push any change to `demo/`
+
+Now any push to `demo/` on main will auto-sync to your Space!
+
+## Manual Deployment
+
+If you prefer to manage the Space separately:
+
+1. **Clone your Space**
    ```bash
    git clone https://huggingface.co/spaces/YOUR_USERNAME/compass-demo
    cd compass-demo
    ```
 
-3. **Copy the demo files**
+2. **Copy demo files**
    ```bash
    cp /path/to/langgraph-compass/demo/* .
    ```
 
-4. **Add your OpenAI API key as a Space secret**
-   - Go to Space Settings → Variables and secrets
-   - Add `OPENAI_API_KEY` as a secret
-
-5. **Push to deploy**
+3. **Push to deploy**
    ```bash
    git add .
-   git commit -m "Initial demo"
+   git commit -m "Update demo"
    git push
    ```
-
-6. Your demo will be live at `https://huggingface.co/spaces/YOUR_USERNAME/compass-demo`
 
 ## Local Development
 
@@ -42,3 +73,9 @@ python app.py
 ```
 
 Then open http://localhost:7860
+
+## Files
+
+- `app.py` - Gradio application with two tabs (Try It, Compare Strategies)
+- `requirements.txt` - Python dependencies
+- `README.md` - This file (not used by Gradio)

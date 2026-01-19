@@ -1,0 +1,41 @@
+name: Sync Demo to Hugging Face Space
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'demo/**'  # Only trigger when demo files change
+
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          lfs: true
+
+      - name: Push to Hugging Face Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_USERNAME: ${{ vars.HF_USERNAME }}
+          HF_SPACE_NAME: ${{ vars.HF_SPACE_NAME }}
+        run: |
+          # Configure git
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+
+          # Clone the HF Space repo
+          git clone https://${HF_USERNAME}:${HF_TOKEN}@huggingface.co/spaces/${HF_USERNAME}/${HF_SPACE_NAME} hf-space
+
+          # Copy demo files to the Space
+          cp -r demo/* hf-space/
+
+          # Push changes
+          cd hf-space
+          git add .
+          git diff --staged --quiet || (git commit -m "Sync from GitHub: ${{ github.sha }}" && git push)
