@@ -1,0 +1,48 @@
+---
+description: Compass Development Guidelines
+alwaysApply: true
+---
+
+# Compass Development Guide
+
+## Project Overview
+
+Compass is a LangGraph node for intelligent follow-up question generation. It follows the `SummarizationNode` pattern from langmem.
+
+## Architecture
+
+- `node.py` - CompassNode main entry point
+- `triggers.py` - TriggerPolicy protocol and implementations  
+- `generator.py` - QuestionGenerator with strategy prompts
+- `ranker.py` - SuggestionRanker for novelty filtering
+- `helpers.py` - Integration utilities
+
+## Key Patterns
+
+1. **Node Protocol**: `__call__(state, config) -> dict`
+2. **Protocol-Based**: `TriggerPolicy` and `ExampleRetriever` are protocols
+3. **Auto-Detection**: Query/response extraction tries common state keys
+4. **Structured Output**: Generator attempts structured output, falls back to text parsing
+
+## Code Style
+
+- Pydantic for structured data
+- Functional approaches for simple operations
+- Always propagate `RunnableConfig` for tracing
+- Type hints on all public APIs
+- Docstrings with examples for public functions
+
+## Testing
+
+- Mock LLM calls in unit tests
+- Use `@pytest.mark.requires_llm` for integration tests
+- Test edge cases: empty inputs, missing keys, malformed data
+
+## Commands
+
+```bash
+uv sync --all-extras    # Setup
+uv run pytest           # Run tests
+uv run ruff check src   # Lint
+uv run mypy src         # Type check
+```
