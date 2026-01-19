@@ -44,10 +44,10 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/amasardana/langgraph-compass"
-Documentation = "https://github.com/amasardana/langgraph-compass#readme"
-Repository = "https://github.com/amasardana/langgraph-compass"
-Issues = "https://github.com/amasardana/langgraph-compass/issues"
+Homepage = "https://github.com/sardanaaman/langgraph-compass"
+Documentation = "https://github.com/sardanaaman/langgraph-compass#readme"
+Repository = "https://github.com/sardanaaman/langgraph-compass"
+Issues = "https://github.com/sardanaaman/langgraph-compass/issues"
 
 [build-system]
 requires = ["hatchling"]
