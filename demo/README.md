@@ -1,3 +1,17 @@
+---
+title: Compass Demo
+emoji: 🧭
+colorFrom: blue
+colorTo: indigo
+sdk: gradio
+sdk_version: "5.0.0"
+python_version: "3.11"
+app_file: app.py
+pinned: false
+license: apache-2.0
+short_description: Intelligent follow-up question generation for LangGraph agents
+---
+
 # Compass Demo
 
 Interactive demo for [langgraph-compass](https://github.com/sardanaaman/langgraph-compass).
