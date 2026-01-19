@@ -15,4 +15,4 @@ __all__ = [
     "extract_previous_followups",
 ]
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"

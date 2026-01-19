@@ -1,6 +1,6 @@
 [project]
 name = "langgraph-compass"
-version = "1.0.0"
+version = "1.0.1"
 description = "Intelligent follow-up question generation for LangGraph agents"
 readme = "README.md"
 license = { text = "Apache-2.0" }
@@ -10,7 +10,7 @@ authors = [
 ]
 keywords = [
     "langgraph",
-    "langchain", 
+    "langchain",
     "follow-up",
     "questions",
     "conversational-ai",
