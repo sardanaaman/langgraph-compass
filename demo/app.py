@@ -12,7 +12,7 @@ OPENAI_AVAILABLE = bool(os.environ.get("OPENAI_API_KEY"))
 if OPENAI_AVAILABLE:
     from langchain_openai import ChatOpenAI
 
-    from compass import CompassNode, DefaultTriggerPolicy
+    from compass import CompassNode, DefaultTriggerPolicy, get_compass_instruction
 
 # ============================================================================
 # THEME & STYLING
@@ -365,37 +365,41 @@ PARALLEL_SCENARIO = {
         "savings": 0.8,
     },
     "code": '''from langgraph.types import Send
-from compass import get_compass_instruction
 
 def route_parallel(state):
     """Run agent and compass simultaneously."""
     return [
         Send("agent", state),
-        Send("compass", state),  # Uses previous turn's context
+        Send("compass", state),  # Speculative: based on question, not response
     ]
 
 builder.add_conditional_edges("router", route_parallel)
 
 # ─────────────────────────────────────────────────────────────
-# Compass prepares suggestions speculatively while agent runs.
-# In your response synthesis step, weave them in organically:
+# Compass suggestions are ready by the time agent finishes.
+# The synthesis step weaves them in organically — adjusting
+# phrasing to complement the actual response content.
 # ─────────────────────────────────────────────────────────────
 
 def synthesize_response(state):
-    """Final step: combine agent response with follow-ups."""
+    """Weave Compass suggestions into the response naturally."""
     response = state["agent_response"]
     suggestions = state.get("compass_suggestions", [])
 
-    if suggestions:
-        # Option 1: Inject as natural continuation
-        instruction = get_compass_instruction(suggestions)
-        final = f"{response}\\n\\n{instruction}"
+    if not suggestions:
+        return {"final_response": response}
 
-        # Option 2: Return structured for UI rendering as chips/buttons
-        # return {"response": response, "followup_chips": suggestions}
+    # Let the LLM weave suggestions into a natural closing
+    synthesis_prompt = f"""Take this response and weave one of the
+follow-up suggestions into a natural closing. Adjust phrasing to
+fit the tone. No headers or bullet points.
 
-    return {"final_response": final}''',
-    "insight": "Compass runs speculatively in parallel. By the time your agent finishes, follow-ups are ready to weave into the response — either as natural text or structured chips for your UI.",
+Response: {response}
+Suggestions: {suggestions}"""
+
+    final = llm.invoke(synthesis_prompt)
+    return {"final_response": final.content}''',
+    "insight": "Compass runs speculatively in parallel based on the question. The synthesis step then weaves suggestions into the response organically, adjusting them to complement the actual content.",
 }
 
 
@@ -649,18 +653,49 @@ def build_playground_tab():
         )
         return
 
+    # Explain the pattern
+    gr.Markdown(
+        """<div class='insight-box'>
+<strong>How it works:</strong> While your agent(s) generate a response, Compass runs in parallel —
+producing grounded, conditional, and novelty-filtered suggestions. The synthesis step then weaves
+the best suggestion into the final response organically, adjusting tone to complement the content.
+Only the synthesized response reaches the user.
+</div>"""
+    )
+
     gr.Markdown(
         "Uses `gpt-5-nano` for cost efficiency. Response time depends on OpenAI API latency."
     )
 
-    def run_playground(query: str, strategy: str, num_suggestions: int) -> tuple[str, str, str]:
+    # Agent system prompt - focused on answering, no follow-ups or offers to continue
+    agent_system_prompt = """You are a helpful assistant. Answer the user's question directly.
+
+IMPORTANT: End your response after providing the answer. Do NOT:
+- Ask follow-up questions
+- Offer to provide more details or tailor the response
+- Say "let me know if..." or "if you tell me more..."
+- Add any closing that invites further interaction
+
+Just answer and stop. Follow-up engagement is handled separately."""
+
+    def run_playground(
+        query: str, strategy: str, num_suggestions: int
+    ) -> tuple[str, str, str, str]:
         if not query.strip():
-            return "", "", "Please enter a question."
+            return "", "", "", "Please enter a question."
         try:
             llm = ChatOpenAI(model="gpt-5-nano", temperature=0.7)
-            response = llm.invoke(f"Answer concisely: {query}")
+
+            # Step 1: Agent generates core response
+            messages = [
+                {"role": "system", "content": agent_system_prompt},
+                {"role": "user", "content": query},
+            ]
+            response = llm.invoke(messages)
             response_text = str(response.content)
 
+            # Step 2: Compass generates suggestions (in production, runs in parallel with Step 1)
+            # Note: suggestions are based on the QUESTION, prepared speculatively
             compass = CompassNode(
                 model=llm,
                 strategy=strategy,
@@ -674,13 +709,33 @@ def build_playground_tab():
             suggestions = result.get("compass_suggestions", [])
 
             if suggestions:
-                formatted = "\n".join(f"- {s}" for s in suggestions)
+                formatted = "\n".join(f"• {s}" for s in suggestions)
+
+                # Step 3: Synthesis using get_compass_instruction from the library
+                # This is the recommended pattern for weaving suggestions organically
+                compass_instruction = get_compass_instruction(result)
+
+                synthesis_messages = [
+                    {
+                        "role": "system",
+                        "content": f"You are a helpful assistant. {compass_instruction}",
+                    },
+                    {"role": "user", "content": query},
+                    {"role": "assistant", "content": response_text},
+                    {
+                        "role": "user",
+                        "content": "Please revise your response to include the follow-up naturally.",
+                    },
+                ]
+                synthesized_response = llm.invoke(synthesis_messages)
+                synthesized = str(synthesized_response.content)
             else:
                 formatted = "No follow-up suggestions generated."
+                synthesized = response_text
 
-            return response_text, formatted, ""
+            return response_text, formatted, synthesized, ""
         except Exception as e:
-            return "", "", f"Error: {e}"
+            return "", "", "", f"Error: {e}"
 
     with gr.Row():
         with gr.Column(scale=1):
@@ -698,14 +753,27 @@ def build_playground_tab():
             submit_btn = gr.Button("Generate", variant="primary")
 
         with gr.Column(scale=1):
-            response_output = gr.Textbox(label="Agent Response", lines=3, interactive=False)
-            followups_output = gr.Textbox(label="Compass Suggestions", lines=4, interactive=False)
+            response_output = gr.Textbox(
+                label="① Raw Agent Response (internal — before synthesis)",
+                lines=3,
+                interactive=False,
+            )
+            followups_output = gr.Textbox(
+                label="② Compass Suggestions (grounded, conditional, novel, parallel)",
+                lines=3,
+                interactive=False,
+            )
+            synthesized_output = gr.Textbox(
+                label="③ Final Response to User (with follow-up woven in)",
+                lines=5,
+                interactive=False,
+            )
             error_output = gr.Markdown("")
 
     submit_btn.click(
         fn=run_playground,
         inputs=[query_input, strategy_select, num_suggestions],
-        outputs=[response_output, followups_output, error_output],
+        outputs=[response_output, followups_output, synthesized_output, error_output],
     )
 
 
