@@ -3,6 +3,7 @@
 [![PyPI version](https://img.shields.io/pypi/v/langgraph-compass)](https://pypi.org/project/langgraph-compass/)
 [![Python versions](https://img.shields.io/pypi/pyversions/langgraph-compass)](https://pypi.org/project/langgraph-compass/)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![Demo](https://img.shields.io/badge/Demo-Hugging%20Face-yellow)](https://sardanaaman-langgraph-compass-demo.hf.space/)
 
 **Intelligent follow-up question generation for LangGraph agents.**
 
