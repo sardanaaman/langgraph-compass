@@ -43,6 +43,9 @@ dev = [
     "pre-commit>=4.0.0",
 ]
 
+[project.scripts]
+compass-eval = "compass.evals.cli:main"
+
 [project.urls]
 Homepage = "https://github.com/sardanaaman/langgraph-compass"
 Documentation = "https://github.com/sardanaaman/langgraph-compass#readme"
