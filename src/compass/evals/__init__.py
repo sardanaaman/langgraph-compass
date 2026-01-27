@@ -32,6 +32,9 @@ from compass.evals.models import (
     ExampleResult,
     RunMetadata,
 )
+from compass.evals.reporters import JSONReporter, MarkdownReporter, Reporter
+from compass.evals.runner import EvalRunner
+from compass.evals.cli import main as eval_main
 
 __all__ = [
     # Data models
@@ -59,4 +62,12 @@ __all__ = [
     "AccuracyMetric",
     "SuccessRateMetric",
     "MetricRegistry",
+    # Reporters
+    "Reporter",
+    "MarkdownReporter",
+    "JSONReporter",
+    # Runner
+    "EvalRunner",
+    # CLI
+    "eval_main",
 ]
