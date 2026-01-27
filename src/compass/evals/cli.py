@@ -53,7 +53,7 @@ def load_plugin(import_path: str) -> Any:
 
 def create_evaluators(
     evaluator_names: list[str], model: Any | None = None
-) -> list["Evaluator"]:
+) -> list[Evaluator]:
     """Create evaluator instances from names.
 
     Args:
@@ -210,8 +210,8 @@ def main(args: list[str] | None = None) -> int:
         from langchain_openai import ChatOpenAI
 
         from compass import CompassNode
-        from compass.evals.runner import EvalRunner
         from compass.evals.reporters import JSONReporter, MarkdownReporter
+        from compass.evals.runner import EvalRunner
 
         # Create output directory
         output_dir = Path(parsed.output)

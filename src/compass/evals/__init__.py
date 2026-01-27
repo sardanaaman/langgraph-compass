@@ -3,6 +3,7 @@
 Provides tools for measuring the quality of follow-up question generation.
 """
 
+from compass.evals.cli import main as eval_main
 from compass.evals.datasets import (
     CSVDataset,
     Dataset,
@@ -34,7 +35,6 @@ from compass.evals.models import (
 )
 from compass.evals.reporters import JSONReporter, MarkdownReporter, Reporter
 from compass.evals.runner import EvalRunner
-from compass.evals.cli import main as eval_main
 
 __all__ = [
     # Data models

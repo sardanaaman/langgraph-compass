@@ -23,7 +23,7 @@ from __future__ import annotations
 import time
 import uuid
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 from langchain_core.runnables import RunnableConfig
@@ -136,7 +136,7 @@ class EvalRunner:
             >>> print(f"Success rate: {results.aggregated.metrics['success_rate']:.2%}")
         """
         run_id = str(uuid.uuid4())
-        start_time = datetime.now(timezone.utc)
+        start_time = datetime.now(UTC)
         run_start = time.perf_counter()
 
         per_example_results: list[ExampleResult] = []
