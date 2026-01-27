@@ -1,0 +1,62 @@
+"""Compass Evaluation Framework.
+
+Provides tools for measuring the quality of follow-up question generation.
+"""
+
+from compass.evals.datasets import (
+    CSVDataset,
+    Dataset,
+    DatasetValidationError,
+    IteratorDataset,
+    JSONLDataset,
+    MemoryDataset,
+)
+from compass.evals.evaluators import (
+    Evaluator,
+    ExactMatchEvaluator,
+    LLMJudgeEvaluator,
+    QuestionFormatEvaluator,
+    StarterPhraseEvaluator,
+)
+from compass.evals.metrics import (
+    AccuracyMetric,
+    MeanScoreMetric,
+    Metric,
+    MetricRegistry,
+    SuccessRateMetric,
+)
+from compass.evals.models import (
+    AggregatedMetrics,
+    EvalResults,
+    Example,
+    ExampleResult,
+    RunMetadata,
+)
+
+__all__ = [
+    # Data models
+    "Example",
+    "ExampleResult",
+    "AggregatedMetrics",
+    "RunMetadata",
+    "EvalResults",
+    # Datasets
+    "Dataset",
+    "DatasetValidationError",
+    "MemoryDataset",
+    "JSONLDataset",
+    "CSVDataset",
+    "IteratorDataset",
+    # Evaluators
+    "Evaluator",
+    "ExactMatchEvaluator",
+    "QuestionFormatEvaluator",
+    "StarterPhraseEvaluator",
+    "LLMJudgeEvaluator",
+    # Metrics
+    "Metric",
+    "MeanScoreMetric",
+    "AccuracyMetric",
+    "SuccessRateMetric",
+    "MetricRegistry",
+]
