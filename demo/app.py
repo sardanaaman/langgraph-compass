@@ -793,8 +793,7 @@ in your agent's capabilities, learning user workflows, and skipping when appropr
 [Documentation](https://github.com/sardanaaman/langgraph-compass#readme)
 """
 
-FOOTER = """---
-*Built and battle-tested at Cisco*
+FOOTER = """
 """
 
 with gr.Blocks(title="Compass Demo") as demo:

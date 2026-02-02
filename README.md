@@ -7,7 +7,7 @@
 
 **Intelligent follow-up question generation for LangGraph agents.**
 
-Transform your AI agents from reactive responders into proactive conversational partners. Compass generates contextually relevant follow-up questions that guide users toward productive outcomes. _Built and battle-tested at Cisco._
+Transform your AI agents from reactive responders into proactive conversational partners. Compass generates contextually relevant follow-up questions that guide users toward productive outcomes.
 
 ## Why Follow-Ups Matter
 
